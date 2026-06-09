@@ -1057,13 +1057,15 @@ export const App: React.FC = () => {
             <span className={`status-dot ${agentRunning ? 'orange' : 'green'}`} />
             <span>{statusText}</span>
           </div>
-          <button 
-            className="collapse-btn" 
-            onClick={() => setChatCollapsed(true)}
-            title="Collapse Chat"
-          >
-            <ChevronLeft size={16} />
-          </button>
+          {!editorCollapsed && (
+            <button 
+              className="collapse-btn" 
+              onClick={() => setChatCollapsed(true)}
+              title="Collapse Chat"
+            >
+              <ChevronLeft size={16} />
+            </button>
+          )}
         </div>
 
         <div className="chat-messages">
@@ -1265,13 +1267,15 @@ export const App: React.FC = () => {
                       <ChevronRight size={16} />
                     </button>
                   </div>
-                  <button 
-                    className="collapse-btn" 
-                    onClick={() => setEditorCollapsed(true)}
-                    title="Collapse Preview"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+                  {!chatCollapsed && (
+                    <button 
+                      className="collapse-btn" 
+                      onClick={() => setEditorCollapsed(true)}
+                      title="Collapse Preview"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
 
