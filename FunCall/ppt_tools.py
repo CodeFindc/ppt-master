@@ -613,6 +613,10 @@ def save_svg_page(project_path: str, filename: str, content: str) -> dict:
         if "/" in filename or "\\" in filename or ".." in filename:
             raise ValueError("Filename cannot contain directory separators or path traversals.")
             
+        # Automatically escape raw ampersands to prevent XML parse errors
+        import re
+        content = re.sub(r'&(?!(amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);)', '&amp;', content)
+            
         dest_file = svg_dir / filename
         dest_file.write_text(content, encoding="utf-8")
         return {
