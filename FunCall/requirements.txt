@@ -123,3 +123,6 @@ fastapi>=0.110.0
 uvicorn>=0.28.0
 python-multipart>=0.0.9
 python-dotenv>=1.0.0
+
+# Model Context Protocol / MCP 协议支持
+mcp>=0.4.0
