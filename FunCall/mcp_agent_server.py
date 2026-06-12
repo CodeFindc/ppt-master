@@ -204,7 +204,10 @@ if __name__ == "__main__":
     
     if args.sse:
         print(f"[*] Starting FunCall MCP Agent-as-a-Service server on SSE: http://{args.host}:{args.port}", file=sys.stderr)
-        mcp.run(transport="sse", host=args.host, port=args.port)
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
+        mcp.settings.transport_security = None  # Disable DNS Rebinding Protection for remote/LAN access
+        mcp.run(transport="sse")
     else:
         print("[*] Starting FunCall MCP Agent-as-a-Service server on stdio...", file=sys.stderr)
         mcp.run(transport="stdio")
