@@ -11,6 +11,13 @@ import json
 import uuid
 import time
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
+
 from mcp.server.fastmcp import FastMCP
 
 # Resolve path to import app.py and ppt_tools.py

@@ -18,6 +18,12 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Annotated, Sequence, TypedDict, Optional, List
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
+
 from fastapi import FastAPI, Cookie, Response, Request, HTTPException, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
