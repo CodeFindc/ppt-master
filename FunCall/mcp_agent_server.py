@@ -196,18 +196,19 @@ def get_project_spec_lock(session_id: str) -> str:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="FunCall MCP Agent-as-a-Service Server")
-    parser.add_argument("--sse", action="store_true", help="Run in SSE transport mode")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to for SSE (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8001, help="Port to listen on for SSE (default: 8001)")
+    parser.add_argument("--transport", default="stdio", choices=["stdio", "sse", "streamable-http"],
+                        help="Transport protocol to use (default: stdio)")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to for network transports (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8001, help="Port to listen on for network transports (default: 8001)")
     
     args = parser.parse_args()
     
-    if args.sse:
-        print(f"[*] Starting FunCall MCP Agent-as-a-Service server on SSE: http://{args.host}:{args.port}", file=sys.stderr)
+    if args.transport in ["sse", "streamable-http"]:
+        print(f"[*] Starting FunCall MCP Agent-as-a-Service server on {args.transport}: http://{args.host}:{args.port}", file=sys.stderr)
         mcp.settings.host = args.host
         mcp.settings.port = args.port
         mcp.settings.transport_security = None  # Disable DNS Rebinding Protection for remote/LAN access
-        mcp.run(transport="sse")
+        mcp.run(transport=args.transport)
     else:
         print("[*] Starting FunCall MCP Agent-as-a-Service server on stdio...", file=sys.stderr)
         mcp.run(transport="stdio")
