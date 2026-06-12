@@ -1171,7 +1171,8 @@ def export_pptx(request_data: dict, session_id: str = Cookie(None)):
 
 @app.get("/api/projects/download")
 def download_deck(filename: str = None, session_id: str = Cookie(None), project_id: str = None):
-    """Finds and downloads the latest exported pptx file or a specific file by name."""
+    """Finds and downloads the latest exported pptx file or a specific file by name.
+    If the requested presentation is not found, automatically compiles and exports it."""
     active_session_id = project_id or session_id
     if not active_session_id and filename:
         # Try to parse session_id UUID from filename prefix (e.g. 92d2ea9b-...)
@@ -1189,14 +1190,42 @@ def download_deck(filename: str = None, session_id: str = Cookie(None), project_
         target_file = (exports_dir / filename).resolve()
         if not str(target_file).startswith(str(exports_dir.resolve())):
             raise HTTPException(status_code=403, detail="Access denied.")
+        
+        # If the requested file does not exist, automatically trigger export to build it
+        if not target_file.exists() or not target_file.is_file():
+            try:
+                ppt_tools.finalize_svg_files(project_path=str(project_path))
+                ppt_tools.split_speaker_notes(project_path=str(project_path))
+                ppt_tools.export_to_pptx(project_path=str(project_path))
+                
+                # Check again. If still not matching target_file name (e.g., due to different timestamp),
+                # use the latest exported pptx file.
+                if not target_file.exists() or not target_file.is_file():
+                    if exports_dir.exists():
+                        pptx_files = sorted(exports_dir.glob("*.pptx"), key=lambda f: f.stat().st_mtime, reverse=True)
+                        if pptx_files:
+                            target_file = pptx_files[0]
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Auto-export failed: {str(e)}")
+
         if not target_file.exists() or not target_file.is_file():
             raise HTTPException(status_code=404, detail="Requested file not found.")
+            
         return FileResponse(
             str(target_file), 
             media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             filename=target_file.name
         )
         
+    # If no filename is requested, return the latest. If exports folder doesn't exist or has no pptx, trigger export.
+    if not exports_dir.exists() or not any(exports_dir.glob("*.pptx")):
+        try:
+            ppt_tools.finalize_svg_files(project_path=str(project_path))
+            ppt_tools.split_speaker_notes(project_path=str(project_path))
+            ppt_tools.export_to_pptx(project_path=str(project_path))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Auto-export failed: {str(e)}")
+            
     if not exports_dir.exists():
         raise HTTPException(status_code=404, detail="No exports folder found.")
         
