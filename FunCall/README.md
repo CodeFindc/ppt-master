@@ -184,3 +184,79 @@ response = client.chat.completions.create(
     tool_choice="auto"
 )
 ```
+
+---
+
+## 🔌 MCP (Model Context Protocol) 智能体服务化调度
+
+本项目在 `FunCall/mcp_agent_server.py` 中实现了**智能体即服务 (Agent-as-a-Service)** 的 MCP 协议封装。它将整个 PPT 协同生成与设计智能体（LangGraph Agent）打包为一个高级的“PPT 制作专家”提供给外部调度。
+
+### 1. 启动 MCP 服务
+
+服务支持三种不同的传输模式（Stdio、SSE HTTP、Streamable HTTP）：
+
+```bash
+# 模式 A: Stdio 模式（默认，用于本地 IDE/Claude 客户端）
+python FunCall/mcp_agent_server.py
+
+# 模式 B: SSE HTTP 传输模式（用于局域网内跨机调用）
+python FunCall/mcp_agent_server.py --transport sse --port 8001
+
+# 模式 C: Streamable HTTP 传输模式（最新推荐，更高效的双向流传输）
+python FunCall/mcp_agent_server.py --transport streamable-http --port 8001
+```
+
+* **启动参数**：
+  * `--transport`：可选择 `stdio`、`sse` 或 `streamable-http`。
+  * `--host`：绑定的 IP 地址（默认 `0.0.0.0`，允许局域网远程访问）。
+  * `--port`：监听端口（默认 `8001`）。
+
+### 2. 客户端接入配置
+
+#### 本地集成 (例如 Claude Desktop)
+在 `%APPDATA%\Claude\claude_desktop_config.json` 中配置：
+```json
+{
+  "mcpServers": {
+    "ppt-master-agent": {
+      "command": "python",
+      "args": [
+        "D:/iso/ppt-master/FunCall/mcp_agent_server.py"
+      ]
+    }
+  }
+}
+```
+
+#### 局域网分布式客户端远程调用 (基于 HTTP SSE)
+```python
+import asyncio
+from mcp import ClientSession
+from mcp.client.sse import sse_client
+
+async def main():
+    # 对接局域网中运行的 MCP 智能体服务
+    async with sse_client("http://192.168.x.x:8001/sse") as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            
+            # 一键委托“PPT 智能体”进行生成
+            result = await session.call_tool(
+                "create_presentation", 
+                arguments={
+                    "prompt": "帮我生成一份关于人工智能在医疗领域应用的 PPT"
+                }
+            )
+            print("生成任务结果:", result.content)
+
+asyncio.run(main())
+```
+
+### 3. 暴露接口规范
+
+* **Tools (工具)**:
+  * `create_presentation(prompt, format)`: 自动启动后台 LangGraph 生成完整的演示文稿并返回 PPTX 下载链接。
+  * `optimize_presentation_with_annotations(session_id)`: 根据用户在画板上对 SVG 标记的批注直接对 PPT 进行二次重绘和重新排版。
+* **Resources (资源)**:
+  * `ppt://{session_id}/spec`: 读取对应项目当前的设计规范大纲文件（`design_spec.md`）。
+  * `ppt://{session_id}/spec-lock`: 读取对应项目当前的样式物理约束锁文件（`spec_lock.md`）。
