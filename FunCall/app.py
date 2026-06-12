@@ -1170,12 +1170,33 @@ def export_pptx(request_data: dict, session_id: str = Cookie(None)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/projects/download")
-def download_deck(session_id: str = Cookie(None)):
-    """Finds and downloads the latest exported pptx file."""
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Missing session_id Cookie.")
-    project_path = resolve_project_path(session_id)
+def download_deck(filename: str = None, session_id: str = Cookie(None), project_id: str = None):
+    """Finds and downloads the latest exported pptx file or a specific file by name."""
+    active_session_id = project_id or session_id
+    if not active_session_id and filename:
+        # Try to parse session_id UUID from filename prefix (e.g. 92d2ea9b-...)
+        uuid_match = re.match(r'^([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', filename, re.IGNORECASE)
+        if uuid_match:
+            active_session_id = uuid_match.group(1)
+            
+    if not active_session_id:
+        raise HTTPException(status_code=400, detail="Missing session_id or project_id.")
+        
+    project_path = resolve_project_path(active_session_id)
     exports_dir = project_path / "exports"
+    
+    if filename:
+        target_file = (exports_dir / filename).resolve()
+        if not str(target_file).startswith(str(exports_dir.resolve())):
+            raise HTTPException(status_code=403, detail="Access denied.")
+        if not target_file.exists() or not target_file.is_file():
+            raise HTTPException(status_code=404, detail="Requested file not found.")
+        return FileResponse(
+            str(target_file), 
+            media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            filename=target_file.name
+        )
+        
     if not exports_dir.exists():
         raise HTTPException(status_code=404, detail="No exports folder found.")
         
