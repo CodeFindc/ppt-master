@@ -33,6 +33,9 @@ except ImportError as e:
 # Initialize FastMCP Server
 mcp = FastMCP("PPT-Generation-Agent")
 
+# Resolve download base URL from environment (default: http://127.0.0.1:5050)
+DOWNLOAD_BASE_URL = os.environ.get("PPT_DOWNLOAD_BASE_URL") or os.environ.get("DOWNLOAD_BASE_URL", "http://127.0.0.1:5050")
+
 # ==========================================
 # 1. MCP Tools (High-Level Actions)
 # ==========================================
@@ -93,7 +96,7 @@ async def create_presentation(prompt: str, format: str = "ppt169") -> str:
     if pptx_files:
         final_pptx_name = pptx_files[0].name
         # Match download API in app.py
-        download_url = f"http://127.0.0.1:5050/api/projects/download?filename={final_pptx_name}"
+        download_url = f"{DOWNLOAD_BASE_URL.rstrip('/')}/api/projects/download?filename={final_pptx_name}"
         return json.dumps({
             "success": True,
             "session_id": session_id,
@@ -156,7 +159,7 @@ async def optimize_presentation_with_annotations(session_id: str) -> str:
         
     if pptx_files:
         final_pptx_name = pptx_files[0].name
-        download_url = f"http://127.0.0.1:5050/api/projects/download?filename={final_pptx_name}"
+        download_url = f"{DOWNLOAD_BASE_URL.rstrip('/')}/api/projects/download?filename={final_pptx_name}"
         return json.dumps({
             "success": True,
             "session_id": session_id,

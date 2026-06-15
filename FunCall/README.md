@@ -18,30 +18,31 @@
 1. **启用 Python 虚拟环境**：
    确保你的全局或项目虚拟环境已激活，且已安装项目所需的全部依赖项（如 `requirements.txt` 中所列的 `PyMuPDF`、`Pillow`、`Flask` 等）。
 
-2. **配置本地 LLM 环境变量**（仅在运行 `local_agent.py` 时需要）：
-   你可以通过环境变量来配置本地大模型接口地址、模型名称以及 API 密钥 (Key)：
-   - **Windows PowerShell**:
+2. **配置环境变量与 `.env` 文件**：
+   在 `FunCall/` 目录下创建一个 `.env` 文件（或设置系统环境变量），以便配置大模型服务及下载链接：
+   
+   - **大模型配置** (仅在运行 `local_agent.py` 或 `mcp_agent_server.py` 时需要)：
+     - `LOCAL_LLM_API_BASE`：API 基础地址 (Endpoint)，优先读取，回退至 `OPENAI_API_BASE`。
+     - `LOCAL_LLM_API_KEY`：API 密钥 (Key)，优先读取，回退至 `OPENAI_API_KEY`。
+     - `LOCAL_LLM_MODEL`：模型名称，优先读取，回退至 `OPENAI_MODEL`。
+     - 示例：`LOCAL_LLM_API_BASE=http://localhost:11434/v1`
+   - **下载服务域名配置** (MCP 节点返回的 PPTX 下载 URL 基础域名)：
+     - `PPT_DOWNLOAD_BASE_URL` 或 `DOWNLOAD_BASE_URL`：配置后，MCP 接口返回的 PPTX 下载链接会自动替换为该地址作为基础域名（例如 `http://192.168.110.209:5050`），以便局域网内其他智能体和客户端能够直接下载。如果不配置，默认返回 `http://127.0.0.1:5050`。
+     - 示例：`PPT_DOWNLOAD_BASE_URL=http://192.168.110.209:5050`
+
+   - **Windows PowerShell 环境变量设置示例**:
      ```powershell
-     # 配置 API 基础地址 (Endpoint) - 优先读取 LOCAL_LLM_API_BASE，回退读取 OPENAI_API_BASE
-     $env:LOCAL_LLM_API_BASE="http://localhost:11434/v1"  # Ollama 默认地址
-     # $env:OPENAI_API_BASE="http://10.x.x.x:8000/v1"     # 局域网内其他中转/vLLM 服务地址
-     
-     # 配置 API 密钥 (Key) - 优先读取 LOCAL_LLM_API_KEY，回退读取 OPENAI_API_KEY
-     $env:LOCAL_LLM_API_KEY="sk-your-local-key-here"      # 本地或局域网中转服务的 API 密钥
-     
-     # 配置模型名称 - 优先读取 LOCAL_LLM_MODEL，回退读取 OPENAI_MODEL
-     $env:LOCAL_LLM_MODEL="qwen2.5-coder:14b"             # 本地加载的模型名称
+     $env:LOCAL_LLM_API_BASE="http://localhost:11434/v1"
+     $env:LOCAL_LLM_API_KEY="sk-your-local-key-here"
+     $env:LOCAL_LLM_MODEL="qwen2.5-coder:14b"
+     $env:PPT_DOWNLOAD_BASE_URL="http://127.0.0.1:5050"
      ```
-   - **Windows CMD**:
+   - **Windows CMD 环境变量设置示例**:
      ```cmd
-     :: 配置 API 基础地址 (Endpoint)
      set LOCAL_LLM_API_BASE=http://localhost:11434/v1
-     
-     :: 配置 API 密钥 (Key)
      set LOCAL_LLM_API_KEY=sk-your-local-key-here
-     
-     :: 配置模型名称
      set LOCAL_LLM_MODEL=qwen2.5-coder:14b
+     set PPT_DOWNLOAD_BASE_URL=http://127.0.0.1:5050
      ```
 
 ---
